@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinSight — Dashboard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-inner">
+        <a href="app.html" class="brand"><span class="brand-mark">Fin</span>Sight</a>
+        <nav class="tabs">
+            <button class="tab-btn active" data-view="dashboard">Dashboard</button>
+            <button class="tab-btn" data-view="transactions">Transactions</button>
+            <button class="tab-btn" data-view="budget">Budget</button>
+        </nav>
+        <div class="topbar-right">
+            <span id="user-name"></span>
+            <button class="link-btn" id="logout-btn">Log out</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="view" id="view-dashboard">
+        <div id="dashboard-banner" class="banner" hidden></div>
+
+        <div class="section" id="no-budget-notice" hidden>
+            <div class="empty-state">
+                <h3>Set up your budget to get started</h3>
+                <p>Tell FinSight how much you plan to spend this month and how you'd like to split it across Needs, Wants and Savings.</p>
+                <button class="btn btn-primary" data-view-link="budget">Set up budget</button>
+            </div>
+        </div>
+
+        <div id="dashboard-content" hidden>
+            <div class="section">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow" id="dashboard-month-label"></p>
+                        <h2>This month's budget</h2>
+                    </div>
+                    <input type="month" id="month-picker">
+                </div>
+                <div class="pillars" id="pillars-grid"></div>
+                <div class="streak-strip">
+                    <div class="streak-item">
+                        <span class="streak-num" id="streak-current">0</span>
+                        <span class="streak-label">day streak</span>
+                    </div>
+                    <div class="streak-item">
+                        <span class="streak-num" id="streak-longest">0</span>
+                        <span class="streak-label">best streak</span>
+                    </div>
+                    <span class="streak-nudge" id="streak-nudge" hidden>Log a transaction today to keep your streak alive.</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <h2>Spending by pillar</h2>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="pillar-chart" height="90"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <h2>Log a transaction</h2>
+                </div>
+                <form id="quick-add-form" class="form-grid narrow">
+                    <div class="field">
+                        <label for="qa-amount">Amount (₹)</label>
+                        <input type="number" id="qa-amount" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="field">
+                        <label for="qa-pillar">Pillar</label>
+                        <select id="qa-pillar" required>
+                            <option value="NEEDS">Needs</option>
+                            <option value="WANTS">Wants</option>
+                            <option value="SAVINGS">Savings</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="qa-subcategory">Sub-category</label>
+                        <select id="qa-subcategory">
+                            <option value="">Uncategorised</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="qa-date">Date</label>
+                        <input type="date" id="qa-date" required>
+                    </div>
+                    <div class="field span-2">
+                        <label for="qa-payee">Payee (optional)</label>
+                        <input type="text" id="qa-payee" maxlength="255" placeholder="e.g. Swiggy, BESCOM">
+                    </div>
+                    <div class="field span-2">
+                        <label for="qa-note">Note (optional)</label>
+                        <input type="text" id="qa-note" maxlength="500">
+                    </div>
+                    <div class="field span-2">
+                        <button type="submit" class="btn btn-primary" id="qa-submit">Save transaction</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <h2>Recent entries</h2>
+                    <button class="link-btn" data-view-link="transactions">View all</button>
+                </div>
+                <table class="ledger" id="recent-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th><th>Description</th><th>Pillar</th><th class="num">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-tbody"></tbody>
+                </table>
+                <div id="recent-empty" class="empty-state" hidden>
+                    <p>No transactions logged yet.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== TRANSACTIONS ===================== -->
+    <section class="view" id="view-transactions" hidden>
+        <div class="section">
+            <div class="section-head">
+                <h2>All transactions</h2>
+                <button class="btn btn-primary btn-small" id="open-add-modal">+ Log spend</button>
+            </div>
+            <div class="filters">
+                <div class="field">
+                    <label for="filter-pillar">Pillar</label>
+                    <select id="filter-pillar">
+                        <option value="">All</option>
+                        <option value="NEEDS">Needs</option>
+                        <option value="WANTS">Wants</option>
+                        <option value="SAVINGS">Savings</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filter-from">From</label>
+                    <input type="date" id="filter-from">
+                </div>
+                <div class="field">
+                    <label for="filter-to">To</label>
+                    <input type="date" id="filter-to">
+                </div>
+                <button class="btn btn-outline btn-small" id="apply-filters">Apply</button>
+                <button class="link-btn" id="clear-filters">Clear</button>
+            </div>
+
+            <table class="ledger">
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Description</th><th>Pillar</th><th>Sub-category</th>
+                        <th class="num">Amount</th><th></th>
+                    </tr>
+                </thead>
+                <tbody id="tx-tbody"></tbody>
+            </table>
+            <div id="tx-empty" class="empty-state" hidden>
+                <h3>No transactions found</h3>
+                <p>Try widening your filters, or log your first spend.</p>
+            </div>
+            <div class="pagination" id="tx-pagination" hidden></div>
+        </div>
+    </section>
+
+    <!-- ===================== BUDGET ===================== -->
+    <section class="view" id="view-budget" hidden>
+        <div class="section">
+            <div class="section-head">
+                <div>
+                    <p class="eyebrow">Your monthly plan</p>
+                    <h2>Budget settings</h2>
+                </div>
+            </div>
+            <div id="budget-banner" class="banner" hidden></div>
+            <form id="budget-form" class="form-grid narrow">
+                <div class="field">
+                    <label for="budget-period">Period</label>
+                    <select id="budget-period">
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="budget-total">Total budget (₹)</label>
+                    <input type="number" id="budget-total" min="1" step="1" required>
+                </div>
+
+                <div class="field">
+                    <label>Split across pillars</label>
+                    <div class="pct-row">
+                        <div class="field">
+                            <label for="budget-needs" style="font-weight:400;">Needs %</label>
+                            <input type="number" id="budget-needs" min="0" max="100" value="50" required>
+                        </div>
+                        <div class="field">
+                            <label for="budget-wants" style="font-weight:400;">Wants %</label>
+                            <input type="number" id="budget-wants" min="0" max="100" value="30" required>
+                        </div>
+                        <div class="field">
+                            <label for="budget-savings" style="font-weight:400;">Savings %</label>
+                            <input type="number" id="budget-savings" min="0" max="100" value="20" required>
+                        </div>
+                    </div>
+                    <p class="pct-total-note" id="pct-total-note">Total: 100%</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="budget-submit">Save budget</button>
+            </form>
+        </div>
+    </section>
+
+</div>
+
+<!-- ===================== EDIT TRANSACTION MODAL ===================== -->
+<div class="modal-backdrop" id="tx-modal-backdrop" hidden>
+    <div class="modal">
+        <h3 id="tx-modal-title">Log a transaction</h3>
+        <div id="tx-modal-banner" class="banner" hidden></div>
+        <form id="tx-modal-form" class="form-grid narrow">
+            <input type="hidden" id="tx-modal-id">
+            <div class="field">
+                <label for="tx-modal-amount">Amount (₹)</label>
+                <input type="number" id="tx-modal-amount" min="0.01" step="0.01" required>
+            </div>
+            <div class="field">
+                <label for="tx-modal-pillar">Pillar</label>
+                <select id="tx-modal-pillar" required>
+                    <option value="NEEDS">Needs</option>
+                    <option value="WANTS">Wants</option>
+                    <option value="SAVINGS">Savings</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="tx-modal-subcategory">Sub-category</label>
+                <select id="tx-modal-subcategory"><option value="">Uncategorised</option></select>
+            </div>
+            <div class="field">
+                <label for="tx-modal-date">Date</label>
+                <input type="date" id="tx-modal-date" required>
+            </div>
+            <div class="field">
+                <label for="tx-modal-payee">Payee (optional)</label>
+                <input type="text" id="tx-modal-payee" maxlength="255">
+            </div>
+            <div class="field">
+                <label for="tx-modal-note">Note (optional)</label>
+                <input type="text" id="tx-modal-note" maxlength="500">
+            </div>
+        </form>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" id="tx-modal-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="tx-modal-save">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js bundled locally (js/vendor/chart.umd.js) so the dashboard
+     chart works offline / behind firewalls, instead of depending on
+     a CDN that may be blocked on the network you demo from. -->
+<script src="js/vendor/chart.umd.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/budget.js"></script>
+</body>
+</html>
